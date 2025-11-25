@@ -1,1 +1,149 @@
+import pygame, random, math
+pygame.init()
+
+
+WIDTH, HEIGHT = 1000, 600
+win = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Number Guessing Game - FX Version")
+
+
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GRAY = (240, 240, 240)
+
+font = pygame.font.Font(None, 32)
+big_font = pygame.font.Font(None, 40)
+
+
+number = random.randint(1, 100)
+attempts = 0
+message = "Guess a number between 1 and 100"
+input_text = ""
+
+
+background = pygame.Surface((WIDTH, HEIGHT))
+t = 0
+
+def generate_gradient():
+    global t, background
+    t += 0.0002
+
+    for y in range(HEIGHT):
+        r = int(100 + 80 * math.sin((y / 60) + t))
+        g = int(120 + 80 * math.sin((y / 70) + t))
+        b = int(150 + 80 * math.sin((y / 80) + t))
+        pygame.draw.line(background, (r, g, b), (0, y), (WIDTH, y))
+
+
+particles = []
+
+def spawn_particles(x, y, color, amount):
+    for _ in range(amount):
+        angle = random.uniform(0, math.pi * 2)
+        speed = random.uniform(2, 5)
+        particles.append({
+            "x": x,
+            "y": y,
+            "vx": math.cos(angle) * speed,
+            "vy": math.sin(angle) * speed,
+            "life": random.randint(20, 35),
+            "color": color
+        })
+
+def update_particles():
+    for p in particles[:]:
+        p["x"] += p["vx"]
+        p["y"] += p["vy"]
+        p["life"] -= 1
+        p["vy"] += 0.05
+
+        if p["life"] <= 0:
+            particles.remove(p)
+        else:
+            pygame.draw.circle(win, p["color"], (int(p["x"]), int(p["y"])), 3)
+
+
+class Button:
+    def __init__(self, x, y, w, h, text):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.text = text
+
+    def draw(self):
+        pygame.draw.rect(win, (50, 100, 255), self.rect, border_radius=8)
+        text = font.render(self.text, True, WHITE)
+        win.blit(text, (self.rect.x + 10, self.rect.y + 8))
+
+    def clicked(self, pos):
+        return self.rect.collidepoint(pos)
+
+guess_button = Button(180, 250, 140, 40, "SUBMIT GUESS")
+reset_button = Button(180, 300, 140, 40, "RESET GAME")
+
+
+running = True
+while running:
+
+    generate_gradient()      
+    win.blit(background, (0, 0))  
+
+    update_particles()        
+
+    
+    win.blit(big_font.render(message, True, BLACK), (40, 40))
+    win.blit(font.render(f"Attempts: {attempts}", True, BLACK), (40, 80))
+
+    
+    pygame.draw.rect(win, WHITE, (150, 150, 200, 40), border_radius=5)
+    win.blit(font.render(input_text, True, BLACK), (160, 160))
+
+    guess_button.draw()
+    reset_button.draw()
+
+    pygame.display.update()
+
+    
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_BACKSPACE:
+                input_text = input_text[:-1]
+            elif event.unicode.isdigit() and len(input_text) < 3:
+                input_text += event.unicode
+
+        
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            pos = event.pos
+
+            
+            if guess_button.clicked(pos):
+                if input_text != "":
+                    guess = int(input_text)
+                    attempts += 1
+
+                    if guess < number:
+                        message = "Too Low!"
+                        spawn_particles(250, 200, (255, 50, 50), 30)
+
+                    elif guess > number:
+                        message = "Too High!"
+                        spawn_particles(250, 200, (255, 50, 50), 30)
+
+                    else:
+                        message = f"Correct! Number was {number}"
+                        spawn_particles(250, 200, (255, 215, 0), 80)
+
+                input_text = ""
+
+            
+            if reset_button.clicked(pos):
+                number = random.randint(1, 100)
+                attempts = 0
+                message = "Game Reset! Guess again."
+                input_text = ""
+                particles.clear()
+
+pygame.quit()
 
