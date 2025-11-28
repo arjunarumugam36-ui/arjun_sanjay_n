@@ -5,14 +5,14 @@ import random
 delay = 0.1
 score = 0
 
-# Screen setup
+
 wn = turtle.Screen()
 wn.title("Snake Game")
 wn.bgcolor("black")
 wn.setup(600, 600)
 wn.tracer(0)
 
-# Snake head
+
 head = turtle.Turtle()
 head.speed(0)
 head.shape("square")
